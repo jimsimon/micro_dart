@@ -9,6 +9,7 @@ import 'package:path/path.dart';
 part "src/bundle_service.dart";
 
 // commands
+part "src/command_runner.dart";
 part "src/commands/exit_command.dart";
 part "src/commands/start_command.dart";
 part "src/commands/stop_command.dart";
