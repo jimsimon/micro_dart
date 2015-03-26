@@ -1,3 +1,3 @@
 # micro_dart
 
-A micro services runtime for Dart.
+A microservices runtime for Dart.
