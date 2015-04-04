@@ -2,6 +2,7 @@ library micro_dart;
 
 import 'dart:isolate';
 import 'dart:io';
+import 'dart:async';
 import 'package:args/command_runner.dart';
 import 'package:path/path.dart';
 

@@ -2,14 +2,18 @@ part of micro_dart;
 
 class BundleService {
 
-  Uri bundleRoot;
+  BundleService() {}
 
-  BundleService(Uri this.bundleRoot);
+  Future<Map<String, Bundle>> discoverBundles(Directory bundleDirectory) async {
+    if (bundleDirectory == null) {
+      throw new ArgumentError.notNull("bundleDirectory");
+    }
+    if (!bundleDirectory.existsSync()) {
+      throw new ArgumentError("Directory does not exist: $bundleDirectory");
+    }
 
-  Map<String, Bundle> discoverBundles() {
     Map<String, Bundle> bundles = new Map();
-    Directory directory = new Directory.fromUri(bundleRoot);
-    directory.listSync().forEach((FileSystemEntity fileSystemEntity) {
+    await for (FileSystemEntity fileSystemEntity in bundleDirectory.list()) {
       if (fileSystemEntity is Directory) {
         String entryPointPath = join(fileSystemEntity.path, "main.dart");
         File entryPoint = new File.fromUri(new Uri.file(entryPointPath));
@@ -22,31 +26,53 @@ class BundleService {
           bundles[bundle.name] = bundle;
         }
       }
-    });
+    }
     return bundles;
   }
 
-  void startBundles(List<Bundle> bundles) {
-    bundles.forEach((bundle) async {
-      print("Starting bundle: ${bundle.name}");
-      Isolate isolate = await Isolate.spawnUri(new Uri.file(bundle.entryPointPath), null, null, paused: true, packageRoot: new Uri.file(bundle.packageRootPath));
-      bundle.status = "paused";
-      ReceivePort receivePort = new ReceivePort();
-      receivePort.listen((message){
-        if (message == null) {
-          print("Bundle exited: ${bundle.name}");
-          bundle.status = "stopped";
-        }
-      });
-      isolate.addOnExitListener(receivePort.sendPort);
-      isolate.resume(isolate.pauseCapability);
-      bundle.isolate = isolate;
+  Future startBundles(List<Bundle> bundles) {
+    List<Future> bundleFutures = new List();
+    bundles.forEach((bundle) {
+      bundleFutures.add(_startBundle(bundle));
     });
+
+    return Future.wait(bundleFutures);
+  }
+
+  Future<Bundle> _startBundle(bundle) async {
+    print("Starting bundle: ${bundle.name}");
+    Isolate isolate = await Isolate.spawnUri(new Uri.file(bundle.entryPointPath), null, null, paused: true, packageRoot: new Uri.file(bundle.packageRootPath));
+    bundle.status = "paused";
+    ReceivePort exitReceivePort = new ReceivePort();
+    ReceivePort errorReceivePort = new ReceivePort()
+    ;
+    exitReceivePort.listen((message){
+      if (message == null) {
+        print("Bundle exited: ${bundle.name}");
+        bundle.status = "stopped";
+        errorReceivePort.close();
+        exitReceivePort.close();
+      }
+    });
+    isolate.addOnExitListener(exitReceivePort.sendPort);
+
+    errorReceivePort.listen((message){
+      if (message == null) {
+        print("Bundle errored: ${bundle.name}");
+        bundle.status = "stopped";
+      }
+    });
+    isolate.addErrorListener(errorReceivePort.sendPort);
+
+    bundle.status = "started";
+    isolate.resume(isolate.pauseCapability);
+    bundle.isolate = isolate;
+    return bundle;
   }
 
   void stopBundles(List<Bundle> bundles) {
     bundles.forEach((bundle) {
-      if (bundle.status == "running") {
+      if (bundle.status == "started") {
         print("Stopping bundle: ${bundle.name}");
         bundle.isolate.kill();
       } else if (bundle.status == "stopped") {

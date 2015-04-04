@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:micro_dart/micro_dart.dart';
 
 main() {
-  BundleService bundleService = new BundleService(new Uri.file("../bundles"));
+  BundleService bundleService = new BundleService(new Directory("../bundles"));
   Map<String, Bundle> bundles = bundleService.discoverBundles();
 
   MicroDartCommandRunner commandRunner = new MicroDartCommandRunner(bundleService, bundles);
@@ -13,8 +13,3 @@ main() {
     commandRunner.run(args);
   });
 }
-
-
-
-
-
