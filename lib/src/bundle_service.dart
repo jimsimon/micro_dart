@@ -42,14 +42,13 @@ class BundleService {
   Future<Bundle> _startBundle(bundle) async {
     print("Starting bundle: ${bundle.name}");
     Isolate isolate = await Isolate.spawnUri(new Uri.file(bundle.entryPointPath), null, null, paused: true, packageRoot: new Uri.file(bundle.packageRootPath));
-    bundle.status = "paused";
     ReceivePort exitReceivePort = new ReceivePort();
-    ReceivePort errorReceivePort = new ReceivePort()
-    ;
+    ReceivePort errorReceivePort = new ReceivePort();
+
     exitReceivePort.listen((message){
       if (message == null) {
         print("Bundle exited: ${bundle.name}");
-        bundle.status = "stopped";
+        bundle.status = BundleStatus.STOPPED;
         errorReceivePort.close();
         exitReceivePort.close();
       }
@@ -59,12 +58,12 @@ class BundleService {
     errorReceivePort.listen((message){
       if (message == null) {
         print("Bundle errored: ${bundle.name}");
-        bundle.status = "stopped";
+        bundle.status = BundleStatus.STOPPED;
       }
     });
     isolate.addErrorListener(errorReceivePort.sendPort);
 
-    bundle.status = "started";
+    bundle.status = BundleStatus.STARTED;
     isolate.resume(isolate.pauseCapability);
     bundle.isolate = isolate;
     return bundle;
@@ -72,10 +71,12 @@ class BundleService {
 
   void stopBundles(List<Bundle> bundles) {
     bundles.forEach((bundle) {
-      if (bundle.status == "started") {
+      if (bundle.status == BundleStatus.STARTED) {
         print("Stopping bundle: ${bundle.name}");
-        bundle.isolate.kill();
-      } else if (bundle.status == "stopped") {
+        bundle.isolate.kill(Isolate.IMMEDIATE);
+        bundle.isolate = null;
+        bundle.status = BundleStatus.STOPPED;
+      } else if (bundle.status == BundleStatus.STOPPED) {
         print("Bundle not running: ${bundle.name}");
       }
     });
@@ -83,6 +84,11 @@ class BundleService {
 }
 
 class Bundle {
-  String name, rootPath, entryPointPath, packageRootPath, status = "stopped";
+  String name, rootPath, entryPointPath, packageRootPath;
+  BundleStatus status = BundleStatus.STOPPED;
   Isolate isolate;
+}
+
+enum BundleStatus {
+  STOPPED, STARTED
 }

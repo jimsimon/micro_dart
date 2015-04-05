@@ -3,6 +3,18 @@ import "package:unittest/unittest.dart";
 import "dart:io";
 import "package:path/path.dart";
 
+List<Bundle> createTestBundles() {
+  List<Bundle> bundles = new List();
+  Bundle bundle = new Bundle();
+  bundle.name = "test_bundle";
+  bundle.entryPointPath = absolute("test/bundles/test_bundle/main.dart");
+  bundle.packageRootPath = absolute("test/bundles/test_bundle/packages");
+  bundle.rootPath = absolute("test/bundles/test_bundle");
+  bundle.status = BundleStatus.STOPPED;
+  bundles.add(bundle);
+  return bundles;
+}
+
 main() {
   group("BundleService", (){
     group("discoverBundles", () {
@@ -26,27 +38,35 @@ main() {
         expect(testBundle.entryPointPath, equals("test/bundles/test_bundle/main.dart"));
         expect(testBundle.packageRootPath, equals("test/bundles/test_bundle/packages"));
         expect(testBundle.rootPath, equals("test/bundles/test_bundle"));
-        expect(testBundle.status, equals("stopped"));
+        expect(testBundle.status, equals(BundleStatus.STOPPED));
         expect(testBundle.isolate, isNull);
       });
     });
 
     group("startBundles", (){
       test("should start all bundles", () async {
-        List<Bundle> bundles = new List();
-        Bundle bundle = new Bundle();
-        bundle.name = "test_bundle";
-        bundle.entryPointPath = absolute("test/bundles/test_bundle/main.dart");
-        bundle.packageRootPath = absolute("test/bundles/test_bundle/packages");
-        bundle.rootPath = absolute("test/bundles/test_bundle");
-        bundle.status = "stopped";
-        bundles.add(bundle);
-
+        var bundles = createTestBundles();
         BundleService bundleService = new BundleService();
         await bundleService.startBundles(bundles);
 
-        expect(bundle.isolate, isNotNull);
-        expect(bundle.status, "started");
+        expect(bundles[0].isolate, isNotNull);
+        expect(bundles[0].status, equals(BundleStatus.STARTED));
+      });
+    });
+
+    group("stopBundles", (){
+      test("should stop all bundles", () async {
+        var bundles = createTestBundles();
+        BundleService bundleService = new BundleService();
+        await bundleService.startBundles(bundles);
+
+        expect(bundles[0].isolate, isNotNull);
+        expect(bundles[0].status, equals(BundleStatus.STARTED));
+
+        bundleService.stopBundles(bundles);
+
+        expect(bundles[0].isolate, isNull);
+        expect(bundles[0].status, equals(BundleStatus.STOPPED));
       });
     });
   });
