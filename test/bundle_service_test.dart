@@ -2,6 +2,9 @@ import "package:micro_dart/micro_dart.dart";
 import "package:unittest/unittest.dart";
 import "dart:io";
 import "package:path/path.dart";
+import "package:logging/logging.dart";
+import "package:logging_handlers/logging_handlers_shared.dart";
+import "package:logging_handlers/server_logging_handlers.dart";
 
 List<Bundle> createTestBundles() {
   List<Bundle> bundles = new List();
@@ -16,19 +19,27 @@ List<Bundle> createTestBundles() {
 }
 
 main() {
+  Logger.root.level = Level.ALL;
+  Logger.root.onRecord.listen(new LogPrintHandler());
+
   group("BundleService", (){
+    BundleService bundleService;
+
+    setUp((){
+      bundleService = new BundleService();
+    });
+
     group("discoverBundles", () {
       test("should throw error if null bundle directory specified", () {
-        expect(new BundleService().discoverBundles(null), throwsArgumentError);
+        expect(bundleService.discoverBundles(null), throwsArgumentError);
       });
 
       test("should throw error if bundle directory does not exist", (){
-        expect(new BundleService().discoverBundles(new Directory("lasjndlj")), throwsArgumentError);
+        expect(bundleService.discoverBundles(new Directory("lasjndlj")), throwsArgumentError);
       });
 
       test("should return all bundles for valid directory", () async {
         Directory directory = new Directory("test/bundles");
-        BundleService bundleService = new BundleService();
         Map<String, Bundle> bundles = await bundleService.discoverBundles(directory);
         expect(bundles.length, equals(1));
         expect(bundles.containsKey("test_bundle"), isTrue);
@@ -43,10 +54,19 @@ main() {
       });
     });
 
+    group("startBundle", (){
+      test("should start the specified bundle", () async {
+        var bundles = createTestBundles();
+        var bundle = await bundleService.startBundle(bundles[0]);
+
+        expect(bundle.isolate, isNotNull);
+        expect(bundle.status, equals(BundleStatus.STARTED));
+      });
+    });
+
     group("startBundles", (){
       test("should start all bundles", () async {
         var bundles = createTestBundles();
-        BundleService bundleService = new BundleService();
         await bundleService.startBundles(bundles);
 
         expect(bundles[0].isolate, isNotNull);
@@ -57,7 +77,6 @@ main() {
     group("stopBundles", (){
       test("should stop all bundles", () async {
         var bundles = createTestBundles();
-        BundleService bundleService = new BundleService();
         await bundleService.startBundles(bundles);
 
         expect(bundles[0].isolate, isNotNull);

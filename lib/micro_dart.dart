@@ -5,6 +5,7 @@ import 'dart:io';
 import 'dart:async';
 import 'package:args/command_runner.dart';
 import 'package:path/path.dart';
+import 'package:logging/logging.dart';
 
 // services
 part "src/bundle_service.dart";
