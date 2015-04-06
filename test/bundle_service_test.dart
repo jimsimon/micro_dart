@@ -88,5 +88,20 @@ main() {
         expect(bundles[0].status, equals(BundleStatus.STOPPED));
       });
     });
+
+    group("stopBundle", (){
+      test("should stop the specified bundle", () async {
+        var bundles = createTestBundles();
+        await bundleService.startBundle(bundles[0]);
+
+        expect(bundles[0].isolate, isNotNull);
+        expect(bundles[0].status, equals(BundleStatus.STARTED));
+
+        bundleService.stopBundle(bundles[0]);
+
+        expect(bundles[0].isolate, isNull);
+        expect(bundles[0].status, equals(BundleStatus.STOPPED));
+      });
+    });
   });
 }

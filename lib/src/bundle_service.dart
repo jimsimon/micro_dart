@@ -2,7 +2,7 @@ part of micro_dart;
 
 class BundleService {
 
-  final Logger _log = new Logger("BundleService"); 
+  final Logger _log = new Logger("BundleService");
 
   Future<Map<String, Bundle>> discoverBundles(Directory bundleDirectory) async {
     if (bundleDirectory == null) {
@@ -15,14 +15,15 @@ class BundleService {
     Map<String, Bundle> bundles = new Map();
     await for (FileSystemEntity fileSystemEntity in bundleDirectory.list()) {
       if (fileSystemEntity is Directory) {
-        String entryPointPath = join(fileSystemEntity.path, "main.dart");
+        String rootPath = fileSystemEntity.absolute.path;
+        String entryPointPath = join(rootPath, "main.dart");
         File entryPoint = new File.fromUri(new Uri.file(entryPointPath));
         if (entryPoint.existsSync()) {
           Bundle bundle = new Bundle();
           bundle.name = basename(fileSystemEntity.path);
-          bundle.rootPath = fileSystemEntity.path;
+          bundle.rootPath = rootPath;
           bundle.entryPointPath = entryPointPath;
-          bundle.packageRootPath = join(fileSystemEntity.path, "packages");
+          bundle.packageRootPath = join(rootPath, "packages");
           bundles[bundle.name] = bundle;
         }
       }
@@ -69,16 +70,20 @@ class BundleService {
     return bundle;
   }
 
+  stopBundle(Bundle bundle) {
+    if (bundle.status == BundleStatus.STARTED) {
+      _log.info("Stopping bundle: ${bundle.name}");
+      bundle.isolate.kill(Isolate.IMMEDIATE);
+      bundle.status = BundleStatus.STOPPED;
+    } else if (bundle.status == BundleStatus.STOPPED) {
+      _log.info("Bundle not running: ${bundle.name}");
+    }
+    bundle.isolate = null;
+  }
+
   void stopBundles(List<Bundle> bundles) {
     bundles.forEach((bundle) {
-      if (bundle.status == BundleStatus.STARTED) {
-        _log.info("Stopping bundle: ${bundle.name}");
-        bundle.isolate.kill(Isolate.IMMEDIATE);
-        bundle.isolate = null;
-        bundle.status = BundleStatus.STOPPED;
-      } else if (bundle.status == BundleStatus.STOPPED) {
-        _log.info("Bundle not running: ${bundle.name}");
-      }
+      stopBundle(bundle);
     });
   }
 }

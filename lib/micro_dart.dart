@@ -7,6 +7,8 @@ import 'package:args/command_runner.dart';
 import 'package:path/path.dart';
 import 'package:logging/logging.dart';
 
+part "src/bundle_manager.dart";
+
 // services
 part "src/bundle_service.dart";
 
