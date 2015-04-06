@@ -4,18 +4,18 @@ class BundleManager {
   final Logger log = new Logger("BundleManager");
   Map<String, Bundle> _bundles = new Map();
 
-  BundleService _bundleService;
+  _BundleService _bundleService;
   Map<String, Bundle> get bundles => _bundles;
 
   Directory _directory;
   Directory get directory => _directory;
 
-  BundleManager(Directory directory, {BundleService bundleService}) {
+  BundleManager(Directory directory, {_BundleService bundleService}) {
     this._directory = directory;
     if (bundleService != null) {
       this._bundleService = bundleService;
     } else {
-      this._bundleService = new BundleService();
+      this._bundleService = new _BundleService();
     }
   }
 

@@ -1,6 +1,6 @@
 part of micro_dart;
 
-class BundleService {
+class _BundleService {
 
   final Logger _log = new Logger("BundleService");
 

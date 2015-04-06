@@ -12,7 +12,7 @@ main() async {
   loggerStream.listen(new SyncFileLoggingHandler("micro_dart.log"));
 
 
-  BundleService bundleService = new BundleService();
+  _BundleService bundleService = new _BundleService();
   Map<String, Bundle> bundles = await bundleService.discoverBundles(new Directory("../bundles"));
 
   MicroDartCommandRunner commandRunner = new MicroDartCommandRunner(bundleService, bundles);
