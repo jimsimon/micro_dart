@@ -12,10 +12,9 @@ main() async {
   loggerStream.listen(new SyncFileLoggingHandler("micro_dart.log"));
 
 
-  _BundleService bundleService = new _BundleService();
-  Map<String, Bundle> bundles = await bundleService.discoverBundles(new Directory("../bundles"));
+  BundleManager bundleManager = new BundleManager(new Directory("../bundles"));
 
-  MicroDartCommandRunner commandRunner = new MicroDartCommandRunner(bundleService, bundles);
+  MicroDartCommandRunner commandRunner = new MicroDartCommandRunner(bundleManager);
   stdin.transform(UTF8.decoder).listen((String command) {
     command = command.replaceAll("\n", "");
     List<String> args = command.split(" ");

@@ -42,7 +42,9 @@ class _BundleService {
 
   Future<Bundle> startBundle(bundle) async {
     _log.info("Starting bundle: ${bundle.name}");
-    Isolate isolate = await Isolate.spawnUri(new Uri.file(bundle.entryPointPath), null, null, paused: true, packageRoot: new Uri.file(bundle.packageRootPath));
+    int port = await _getFreePort();
+    _log.info("Assigning port $port to ${bundle.name}");
+    Isolate isolate = await Isolate.spawnUri(new Uri.file(bundle.entryPointPath), [port], null, paused: true, packageRoot: new Uri.file(bundle.packageRootPath));
     ReceivePort exitReceivePort = new ReceivePort();
     ReceivePort errorReceivePort = new ReceivePort();
 
@@ -68,6 +70,14 @@ class _BundleService {
     isolate.resume(isolate.pauseCapability);
     bundle.isolate = isolate;
     return bundle;
+  }
+
+  Future<int> _getFreePort() async {
+    int port = null;
+    HttpServer server = await HttpServer.bind("localhost", 0);
+    port = server.port;
+    await server.close();
+    return port;
   }
 
   stopBundle(Bundle bundle) {

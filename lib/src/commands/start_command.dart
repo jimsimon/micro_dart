@@ -2,13 +2,12 @@ part of micro_dart;
 
 class StartCommand extends Command {
 
-  BundleService bundleService;
-  Map<String, Bundle> bundles;
-  StartCommand(this.bundleService, this.bundles);
+  BundleManager bundleManager;
+  StartCommand(this.bundleManager);
 
   String get name => "start";
   String get description => "Starts all bundles";
   void run() {
-    bundleService.startBundles(bundles.values.toList());
+    bundleManager.start();
   }
 }
