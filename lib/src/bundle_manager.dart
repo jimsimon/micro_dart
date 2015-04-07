@@ -8,8 +8,9 @@ class BundleManager {
 
   Directory _directory;
   Directory get directory => _directory;
+  bool autoInstall;
 
-  BundleManager(Directory directory, {_BundleService bundleService}) {
+  BundleManager(Directory directory, {_BundleService bundleService, bool this.autoInstall: true}) {
     this._directory = directory;
     if (bundleService != null) {
       this._bundleService = bundleService;
@@ -19,7 +20,7 @@ class BundleManager {
   }
 
   _refresh() async {
-    if (_bundles.isEmpty) {
+    if (_bundles.isEmpty && autoInstall) {
       _bundles = await _bundleService.discoverBundles(_directory);
     }
   }

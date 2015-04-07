@@ -4,10 +4,22 @@ import "package:micro_dart/micro_dart.dart";
 import "package:path/path.dart";
 
 main() {
+
+  BundleManager bundleManager;
   group("BundleManager", (){
-    test("should have no running bundles after creation", () async {
+    setUp((){
       Directory directory = new Directory("test/bundles");
-      BundleManager bundleManager = new BundleManager(directory);
+      bundleManager = new BundleManager(directory);
+    });
+
+    test("should have no bundles if autoInstall is off",() async {
+      Directory directory = new Directory("test/bundles");
+      BundleManager bundleManager = new BundleManager(directory, autoInstall: false);
+      Map<String, BundleStatus> statusMap = await bundleManager.getStatus();
+      expect(statusMap, isEmpty);
+    });
+
+    test("should have no running bundles after creation", () async {
       Map<String, BundleStatus> statusMap = await bundleManager.getStatus();
       expect(statusMap.length, equals(2));
       statusMap.forEach((name, status){
@@ -15,10 +27,18 @@ main() {
       });
     });
 
+    group("install", (){
+      test("should install all bundles if none specified", (){
+
+      });
+
+      test("should install only specified bundles", (){
+
+      });
+    });
+
     group("start", () {
       test("should start all bundles if none specified", () async {
-        Directory directory = new Directory("test/bundles");
-        BundleManager bundleManager = new BundleManager(directory);
         await bundleManager.start();
 
         var bundles = await bundleManager.getStatus();
@@ -28,8 +48,6 @@ main() {
       });
 
       test("should start only specified bundles", () async {
-        Directory directory = new Directory("test/bundles");
-        BundleManager bundleManager = new BundleManager(directory);
         await bundleManager.start(["test_bundle"]);
 
         var bundles = await bundleManager.getStatus();
@@ -41,9 +59,6 @@ main() {
 
     group("stop", () {
       test("should stop all bundles if none specified", () async {
-        Directory directory = new Directory("test/bundles");
-        BundleManager bundleManager = new BundleManager(directory);
-
         await bundleManager.start();
 
         var bundles = await bundleManager.getStatus();
@@ -60,9 +75,6 @@ main() {
       });
 
       test("should stop only specified bundles", () async {
-        Directory directory = new Directory("test/bundles");
-        BundleManager bundleManager = new BundleManager(directory);
-
         await bundleManager.start();
 
         var bundles = await bundleManager.getStatus();
