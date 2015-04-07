@@ -31,9 +31,9 @@ class _BundleService {
     return bundles;
   }
 
-  Future startBundles(List<Bundle> bundles) {
+  Future startBundles(Map<String, Bundle> bundles) {
     List<Future> bundleFutures = new List();
-    bundles.forEach((bundle) {
+    bundles.forEach((name, bundle) {
       bundleFutures.add(startBundle(bundle));
     });
 
@@ -91,8 +91,8 @@ class _BundleService {
     bundle.isolate = null;
   }
 
-  void stopBundles(List<Bundle> bundles) {
-    bundles.forEach((bundle) {
+  void stopBundles(Map<String, Bundle> bundles) {
+    bundles.forEach((name, bundle) {
       stopBundle(bundle);
     });
   }

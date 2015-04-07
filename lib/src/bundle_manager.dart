@@ -8,31 +8,37 @@ class BundleManager {
 
   Directory _directory;
   Directory get directory => _directory;
-  bool autoInstall;
 
-  BundleManager(Directory directory, {_BundleService bundleService, bool this.autoInstall: true}) {
+  static Future<BundleManager> getInstance(Directory directory, {bool autoInstall: true}) async {
+    _BundleService bundleService = new _BundleService();
+    BundleManager bundleManager = new BundleManager._internal(directory, bundleService);
+    if (autoInstall) {
+      await bundleManager.install();
+    }
+    return bundleManager;
+  }
+
+  BundleManager._internal(Directory directory, _BundleService bundleService) {
     this._directory = directory;
-    if (bundleService != null) {
-      this._bundleService = bundleService;
-    } else {
-      this._bundleService = new _BundleService();
-    }
+    this._bundleService = bundleService;
   }
 
-  _refresh() async {
-    if (_bundles.isEmpty && autoInstall) {
-      _bundles = await _bundleService.discoverBundles(_directory);
-    }
+  install([List<String> bundleNames]) async {
+    Map<String, Bundle> discoveredBundles = await _bundleService.discoverBundles(_directory);
+    _bundles = filterBundlesByName(discoveredBundles, bundleNames);
   }
 
-  List<Bundle> getBundlesToChange(List<String> bundleNames) {
-    List<Bundle> bundlesToStart = _bundles.values.toList();
+  Map<String, Bundle> filterBundlesByName(Map<String, Bundle> bundles, List<String> bundleNames) {
+    if (bundleNames == null || bundleNames.isEmpty) {
+      return bundles;
+    }
+
+    Map<String, Bundle> bundlesToStart = new Map();
     if (bundleNames != null && bundleNames.isNotEmpty) {
-      bundlesToStart = new List<Bundle>();
       bundleNames.forEach((name) {
-        var bundle = _bundles[name];
+        var bundle = bundles[name];
         if (bundle != null) {
-          bundlesToStart.add(bundle);
+          bundlesToStart[name] = bundle;
         }
       });
     }
@@ -40,18 +46,16 @@ class BundleManager {
   }
 
   start([List<String> bundleNames]) async {
-    await _refresh();
-    var bundlesToStart = getBundlesToChange(bundleNames);
+    var bundlesToStart = filterBundlesByName(_bundles, bundleNames);
     await _bundleService.startBundles(bundlesToStart);
   }
 
   void stop([List<String> bundleNames]) {
-    var bundlesToStop = getBundlesToChange(bundleNames);
+    var bundlesToStop = filterBundlesByName(_bundles, bundleNames);
     _bundleService.stopBundles(bundlesToStop);
   }
 
   Future<Map<String, BundleStatus>> getStatus() async {
-    await _refresh();
     Map<String, BundleStatus> statusMap = new Map();
     _bundles.forEach((name, bundle) {
       statusMap[name] = bundle.status;

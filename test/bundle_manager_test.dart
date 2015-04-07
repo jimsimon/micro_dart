@@ -6,15 +6,15 @@ import "package:path/path.dart";
 main() {
 
   BundleManager bundleManager;
+  Directory directory;
   group("BundleManager", (){
-    setUp((){
-      Directory directory = new Directory("test/bundles");
-      bundleManager = new BundleManager(directory);
+    setUp(() async {
+      directory = new Directory("test/bundles");
+      bundleManager = await BundleManager.getInstance(directory);
     });
 
     test("should have no bundles if autoInstall is off",() async {
-      Directory directory = new Directory("test/bundles");
-      BundleManager bundleManager = new BundleManager(directory, autoInstall: false);
+      BundleManager bundleManager = await BundleManager.getInstance(directory, autoInstall: false);
       Map<String, BundleStatus> statusMap = await bundleManager.getStatus();
       expect(statusMap, isEmpty);
     });
@@ -28,12 +28,22 @@ main() {
     });
 
     group("install", (){
-      test("should install all bundles if none specified", (){
-
+      test("should install all bundles if none specified", () async {
+        BundleManager bundleManager = await BundleManager.getInstance(directory, autoInstall: false);
+        await bundleManager.install();
+        Map<String, BundleStatus> statusMap = await bundleManager.getStatus();
+        expect(statusMap.length, equals(2));
+        statusMap.forEach((name, status){
+          expect(status, equals(BundleStatus.STOPPED));
+        });
       });
 
-      test("should install only specified bundles", (){
-
+      test("should install only specified bundles", () async {
+        BundleManager bundleManager = await BundleManager.getInstance(directory, autoInstall: false);
+        await bundleManager.install(["test_bundle2"]);
+        Map<String, BundleStatus> statusMap = await bundleManager.getStatus();
+        expect(statusMap.length, equals(1));
+        expect(statusMap["test_bundle2"], BundleStatus.STOPPED);
       });
     });
 
