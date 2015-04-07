@@ -66,7 +66,7 @@ class _BundleService {
     });
     isolate.addErrorListener(errorReceivePort.sendPort);
 
-    bundle.status = BundleStatus.STARTED;
+    bundle.status = BundleStatus.RUNNING;
     isolate.resume(isolate.pauseCapability);
     bundle.isolate = isolate;
     return bundle;
@@ -81,7 +81,7 @@ class _BundleService {
   }
 
   stopBundle(Bundle bundle) {
-    if (bundle.status == BundleStatus.STARTED) {
+    if (bundle.status == BundleStatus.RUNNING) {
       _log.info("Stopping bundle: ${bundle.name}");
       bundle.isolate.kill(Isolate.IMMEDIATE);
       bundle.status = BundleStatus.STOPPED;
@@ -105,5 +105,5 @@ class Bundle {
 }
 
 enum BundleStatus {
-  STOPPED, STARTED
+  STOPPED, RUNNING
 }

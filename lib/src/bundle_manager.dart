@@ -5,7 +5,6 @@ class BundleManager {
   Map<String, Bundle> _bundles = new Map();
 
   _BundleService _bundleService;
-  Map<String, Bundle> get bundles => _bundles;
 
   Directory _directory;
   Directory get directory => _directory;
@@ -19,11 +18,11 @@ class BundleManager {
     }
   }
 
-
-  refresh() async {
-    _bundles = await _bundleService.discoverBundles(_directory);
+  _refresh() async {
+    if (_bundles.isEmpty) {
+      _bundles = await _bundleService.discoverBundles(_directory);
+    }
   }
-
 
   List<Bundle> getBundlesToChange(List<String> bundleNames) {
     List<Bundle> bundlesToStart = _bundles.values.toList();
@@ -40,7 +39,7 @@ class BundleManager {
   }
 
   start([List<String> bundleNames]) async {
-    await refresh();
+    await _refresh();
     var bundlesToStart = getBundlesToChange(bundleNames);
     await _bundleService.startBundles(bundlesToStart);
   }
@@ -48,5 +47,14 @@ class BundleManager {
   void stop([List<String> bundleNames]) {
     var bundlesToStop = getBundlesToChange(bundleNames);
     _bundleService.stopBundles(bundlesToStop);
+  }
+
+  Future<Map<String, BundleStatus>> getStatus() async {
+    await _refresh();
+    Map<String, BundleStatus> statusMap = new Map();
+    _bundles.forEach((name, bundle) {
+      statusMap[name] = bundle.status;
+    });
+    return statusMap;
   }
 }

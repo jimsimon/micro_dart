@@ -5,26 +5,14 @@ import "package:path/path.dart";
 
 main() {
   group("BundleManager", (){
-    test("should be managing 0 bundles after creation", (){
+    test("should have no running bundles after creation", () async {
       Directory directory = new Directory("test/bundles");
       BundleManager bundleManager = new BundleManager(directory);
-      expect(bundleManager.bundles, isEmpty);
-    });
-
-    test("refresh should find all bundles in specified bundle directory", () async {
-      Directory directory = new Directory("test/bundles");
-      BundleManager bundleManager = new BundleManager(directory);
-      await bundleManager.refresh();
-      expect(bundleManager.bundles.length, equals(2));
-      expect(bundleManager.bundles.containsKey("test_bundle"), isTrue);
-
-      Bundle testBundle = bundleManager.bundles["test_bundle"];
-      expect(testBundle.name, equals("test_bundle"));
-      expect(testBundle.entryPointPath, equals(absolute("test/bundles/test_bundle/main.dart")));
-      expect(testBundle.packageRootPath, equals(absolute("test/bundles/test_bundle/packages")));
-      expect(testBundle.rootPath, equals(absolute("test/bundles/test_bundle")));
-      expect(testBundle.status, equals(BundleStatus.STOPPED));
-      expect(testBundle.isolate, isNull);
+      Map<String, BundleStatus> statusMap = await bundleManager.getStatus();
+      expect(statusMap.length, equals(2));
+      statusMap.forEach((name, status){
+        expect(status, equals(BundleStatus.STOPPED));
+      });
     });
 
     group("start", () {
@@ -33,16 +21,10 @@ main() {
         BundleManager bundleManager = new BundleManager(directory);
         await bundleManager.start();
 
-        var bundles = bundleManager.bundles.values.toList();
+        var bundles = await bundleManager.getStatus();
         expect(bundles, isNotEmpty);
-
-        var bundle = bundles.first;
-        expect(bundle.isolate, isNotNull);
-        expect(bundle.status, equals(BundleStatus.STARTED));
-
-        var bundle2 = bundles[1];
-        expect(bundle2.isolate, isNotNull);
-        expect(bundle2.status, equals(BundleStatus.STARTED));
+        expect(bundles["test_bundle"], equals(BundleStatus.RUNNING));
+        expect(bundles["test_bundle2"], equals(BundleStatus.RUNNING));
       });
 
       test("should start only specified bundles", () async {
@@ -50,16 +32,10 @@ main() {
         BundleManager bundleManager = new BundleManager(directory);
         await bundleManager.start(["test_bundle"]);
 
-        var bundles = bundleManager.bundles.values.toList();
+        var bundles = await bundleManager.getStatus();
         expect(bundles, isNotEmpty);
-
-        var bundle = bundles.first;
-        expect(bundle.isolate, isNotNull);
-        expect(bundle.status, equals(BundleStatus.STARTED));
-
-        var bundle2 = bundles[1];
-        expect(bundle2.isolate, isNull);
-        expect(bundle2.status, equals(BundleStatus.STOPPED));
+        expect(bundles["test_bundle"], equals(BundleStatus.RUNNING));
+        expect(bundles["test_bundle2"], equals(BundleStatus.STOPPED));
       });
     });
 
@@ -70,24 +46,17 @@ main() {
 
         await bundleManager.start();
 
-        var bundles = bundleManager.bundles.values.toList();
+        var bundles = await bundleManager.getStatus();
         expect(bundles, isNotEmpty);
-
-        var bundle = bundles.first;
-        expect(bundle.isolate, isNotNull);
-        expect(bundle.status, equals(BundleStatus.STARTED));
-
-        var bundle2 = bundles[1];
-        expect(bundle2.isolate, isNotNull);
-        expect(bundle2.status, equals(BundleStatus.STARTED));
+        expect(bundles["test_bundle"], equals(BundleStatus.RUNNING));
+        expect(bundles["test_bundle2"], equals(BundleStatus.RUNNING));
 
         bundleManager.stop();
 
-        expect(bundle.isolate, isNull);
-        expect(bundle.status, equals(BundleStatus.STOPPED));
-
-        expect(bundle2.isolate, isNull);
-        expect(bundle2.status, equals(BundleStatus.STOPPED));
+        bundles = await bundleManager.getStatus();
+        expect(bundles, isNotEmpty);
+        expect(bundles["test_bundle"], equals(BundleStatus.STOPPED));
+        expect(bundles["test_bundle2"], equals(BundleStatus.STOPPED));
       });
 
       test("should stop only specified bundles", () async {
@@ -96,24 +65,17 @@ main() {
 
         await bundleManager.start();
 
-        var bundles = bundleManager.bundles;
+        var bundles = await bundleManager.getStatus();
         expect(bundles, isNotEmpty);
-
-        var bundle = bundles["test_bundle"];
-        expect(bundle.isolate, isNotNull);
-        expect(bundle.status, equals(BundleStatus.STARTED));
-
-        var bundle2 = bundles["test_bundle2"];
-        expect(bundle2.isolate, isNotNull);
-        expect(bundle2.status, equals(BundleStatus.STARTED));
+        expect(bundles["test_bundle"], equals(BundleStatus.RUNNING));
+        expect(bundles["test_bundle2"], equals(BundleStatus.RUNNING));
 
         bundleManager.stop(["test_bundle"]);
 
-        expect(bundle.isolate, isNull);
-        expect(bundle.status, equals(BundleStatus.STOPPED));
-
-        expect(bundle2.isolate, isNotNull);
-        expect(bundle2.status, equals(BundleStatus.STARTED));
+        bundles = await bundleManager.getStatus();
+        expect(bundles, isNotEmpty);
+        expect(bundles["test_bundle"], equals(BundleStatus.STOPPED));
+        expect(bundles["test_bundle2"], equals(BundleStatus.RUNNING));
       });
     });
   });
