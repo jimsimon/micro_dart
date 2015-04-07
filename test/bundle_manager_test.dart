@@ -76,7 +76,7 @@ main() {
         expect(bundles["test_bundle"], equals(BundleStatus.RUNNING));
         expect(bundles["test_bundle2"], equals(BundleStatus.RUNNING));
 
-        bundleManager.stop();
+        await bundleManager.stop();
 
         bundles = await bundleManager.getStatus();
         expect(bundles, isNotEmpty);
@@ -92,7 +92,7 @@ main() {
         expect(bundles["test_bundle"], equals(BundleStatus.RUNNING));
         expect(bundles["test_bundle2"], equals(BundleStatus.RUNNING));
 
-        bundleManager.stop(["test_bundle"]);
+        await bundleManager.stop(["test_bundle"]);
 
         bundles = await bundleManager.getStatus();
         expect(bundles, isNotEmpty);

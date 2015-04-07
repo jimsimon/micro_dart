@@ -1,13 +1,12 @@
 part of micro_dart;
 
 class BundleManager {
-  final Logger log = new Logger("BundleManager");
+  final Logger _log = new Logger("BundleManager");
+
   Map<String, Bundle> _bundles = new Map();
 
   _BundleService _bundleService;
-
   Directory _directory;
-  Directory get directory => _directory;
 
   static Future<BundleManager> getInstance(Directory directory, {bool autoInstall: true}) async {
     _BundleService bundleService = new _BundleService();
@@ -23,12 +22,30 @@ class BundleManager {
     this._bundleService = bundleService;
   }
 
-  install([List<String> bundleNames]) async {
+  Future install([List<String> bundleNames]) async {
     Map<String, Bundle> discoveredBundles = await _bundleService.discoverBundles(_directory);
-    _bundles = filterBundlesByName(discoveredBundles, bundleNames);
+    _bundles = _filterBundlesByName(discoveredBundles, bundleNames);
   }
 
-  Map<String, Bundle> filterBundlesByName(Map<String, Bundle> bundles, List<String> bundleNames) {
+  Future start([List<String> bundleNames]) async {
+    var bundlesToStart = _filterBundlesByName(_bundles, bundleNames);
+    await _bundleService.startBundles(bundlesToStart);
+  }
+
+  Future stop([List<String> bundleNames]) async {
+    var bundlesToStop = _filterBundlesByName(_bundles, bundleNames);
+    _bundleService.stopBundles(bundlesToStop);
+  }
+
+  Future<Map<String, BundleStatus>> getStatus() async {
+    Map<String, BundleStatus> statusMap = new Map();
+    _bundles.forEach((name, bundle) {
+      statusMap[name] = bundle.status;
+    });
+    return statusMap;
+  }
+
+  Map<String, Bundle> _filterBundlesByName(Map<String, Bundle> bundles, List<String> bundleNames) {
     if (bundleNames == null || bundleNames.isEmpty) {
       return bundles;
     }
@@ -43,23 +60,5 @@ class BundleManager {
       });
     }
     return bundlesToStart;
-  }
-
-  start([List<String> bundleNames]) async {
-    var bundlesToStart = filterBundlesByName(_bundles, bundleNames);
-    await _bundleService.startBundles(bundlesToStart);
-  }
-
-  void stop([List<String> bundleNames]) {
-    var bundlesToStop = filterBundlesByName(_bundles, bundleNames);
-    _bundleService.stopBundles(bundlesToStop);
-  }
-
-  Future<Map<String, BundleStatus>> getStatus() async {
-    Map<String, BundleStatus> statusMap = new Map();
-    _bundles.forEach((name, bundle) {
-      statusMap[name] = bundle.status;
-    });
-    return statusMap;
   }
 }
