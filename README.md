@@ -10,3 +10,4 @@ IDEAS
 * Watch for changes to the bundles folder and automatically load new bundles.  If a zip/tar/tgz is dropped into the bundles folder, it should be extracted/expanded before starting.
 * Allow for bundle install from URL (support zip, tar, tar.gz, and tgz -- see managed_mongo for how to do this)
 * Allow for two different versions of the same bundle to be installed and independently proxied (ex: bundleA/1.0.0 and bundleA/1.1.0) -- pull version from pubspec.yaml?
+* Add management REST API and UI
