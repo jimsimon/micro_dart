@@ -11,13 +11,16 @@ main() async {
   loggerStream.listen(new LogPrintHandler());
   loggerStream.listen(new SyncFileLoggingHandler("micro_dart.log"));
 
-
-  BundleManager bundleManager = await BundleManager.getInstance(new Directory("../bundles"));
+  MicroDart bundleManager = await MicroDart.getInstance(new Directory("../bundles"));
 
   MicroDartCommandRunner commandRunner = new MicroDartCommandRunner(bundleManager);
-  stdin.transform(UTF8.decoder).listen((String command) {
+  stdin.transform(UTF8.decoder).listen((String command) async {
     command = command.replaceAll("\n", "");
     List<String> args = command.split(" ");
-    commandRunner.run(args);
+    try {
+      await commandRunner.run(args);
+    } catch(e) {
+      commandRunner.printUsage();
+    }
   });
 }

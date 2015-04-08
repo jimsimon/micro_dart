@@ -11,7 +11,7 @@ import "package:shelf/shelf_io.dart" as io;
 import "package:shelf_proxy/shelf_proxy.dart";
 import "package:shelf_route/shelf_route.dart";
 
-part "src/bundle_manager.dart";
+part "src/micro_dart_impl.dart";
 part "src/bundle_proxy.dart";
 
 // services

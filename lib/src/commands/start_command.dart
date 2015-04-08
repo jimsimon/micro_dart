@@ -2,7 +2,7 @@ part of micro_dart;
 
 class StartCommand extends Command {
 
-  BundleManager bundleManager;
+  MicroDart bundleManager;
   StartCommand(this.bundleManager);
 
   String get name => "start";

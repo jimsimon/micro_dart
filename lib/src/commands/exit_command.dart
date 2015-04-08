@@ -2,7 +2,7 @@ part of micro_dart;
 
 class ExitCommand extends Command {
 
-  BundleManager bundleManager;
+  MicroDart bundleManager;
   ExitCommand(this.bundleManager);
 
   String get name => "exit";

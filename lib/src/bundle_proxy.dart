@@ -2,25 +2,53 @@ part of micro_dart;
 
 class BundleProxy {
   HttpServer server;
-  BundleManager bundleManager;
+  Router proxyRouter;
+  Map<String, shelf.Handler> proxyHandlers = new Map();
 
-  BundleProxy(BundleManager this.bundleManager);
-
-  start() async {
-    var pipeline = const shelf.Pipeline().addMiddleware(shelf.logRequests());
-    var myRouter = router();
-
-    bundleManager._bundles.forEach((name, bundle) {
-      int port = bundle.port;
-      var proxy = proxyHandler("http://localhost:$port");
-      myRouter.add("/$name", ["POST", "GET", "PUT", "DELETE", "OPTIONS", "PATCH"], proxy, exactMatch: false);
-    });
-    var handler = pipeline.addHandler(myRouter.handler);
-    server = await io.serve(handler, InternetAddress.LOOPBACK_IP_V4.address, 8080);
-    print("Listening on port 80");
+  static Future<BundleProxy> getInstance({int port: 8080}) async {
+    BundleProxy proxy = new BundleProxy._internal();
+    await proxy.start(port: port);
+    return proxy;
   }
 
-  stop() async {
+  BundleProxy._internal();
+
+  Future start({int port: 8080}) async {
+    proxyRouter = router();
+    var handler = const shelf.Pipeline().addMiddleware(shelf.logRequests()).addHandler(_bundleHandler);
+    server = await io.serve(handler, InternetAddress.LOOPBACK_IP_V4.address, port);
+  }
+
+  addProxies(Map<String, Bundle> bundles) {
+    bundles.forEach((name, bundle){
+      var proxy = proxyHandler("http://localhost:${bundle.port}");
+      proxyHandlers[bundle.name] = proxy;
+    });
+  }
+
+  removeProxies(Map<String, Bundle> bundles) {
+    bundles.forEach((name, bundle){
+      proxyHandlers.remove(name);
+    });
+  }
+
+  Future stop() async {
+    proxyHandlers.clear();
     await server.close(force: true);
+  }
+
+  _bundleHandler(shelf.Request request) {
+    List<String> segments = request.url.pathSegments;
+    if (segments == null || segments.isEmpty) {
+      return new shelf.Response.notFound(null);
+    }
+
+    String proxyRoot = segments.first;
+    shelf.Handler proxyHandler = proxyHandlers[proxyRoot];
+    if (proxyHandler == null) {
+      return new shelf.Response.notFound(null);
+    }
+
+    return proxyHandler(request);
   }
 }

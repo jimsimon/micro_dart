@@ -2,7 +2,7 @@ part of micro_dart;
 
 class StopCommand extends Command {
 
-  BundleManager bundleManager;
+  MicroDart bundleManager;
   StopCommand(this.bundleManager);
 
   String get name => "stop";
