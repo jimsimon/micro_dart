@@ -14,12 +14,11 @@ main() {
     HttpClientRequest request = await client.get("localhost", 8080, "bundle1/test");
     HttpClientResponse response = await request.close();
 
-    print("status:" + response.statusCode.toString());
     expect(response.statusCode, equals(200));
-    response.transform(UTF8.decoder).listen((content) async {
+    await for (var content in response.transform(UTF8.decoder)) {
       expect(content, equals("test"));
-      await bundleProxy.stop();
-      await bundleManager.stop();
-    });
+    }
+    await bundleProxy.stop();
+    await bundleManager.stop();
   });
 }

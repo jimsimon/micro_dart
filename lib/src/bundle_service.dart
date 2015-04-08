@@ -75,7 +75,7 @@ class _BundleService {
 
   Future<int> _getFreePort() async {
     int port = null;
-    HttpServer server = await HttpServer.bind("localhost", 0);
+    HttpServer server = await HttpServer.bind(InternetAddress.ANY_IP_V4, 0);
     port = server.port;
     await server.close(force: true);
     return port;
