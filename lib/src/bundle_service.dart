@@ -45,6 +45,7 @@ class _BundleService {
     int port = await _getFreePort();
     _log.info("Assigning port $port to ${bundle.name}");
     Isolate isolate = await Isolate.spawnUri(new Uri.file(bundle.entryPointPath), [port], null, paused: true, packageRoot: new Uri.file(bundle.packageRootPath));
+    bundle.port = port;
     ReceivePort exitReceivePort = new ReceivePort();
     ReceivePort errorReceivePort = new ReceivePort();
 
@@ -76,7 +77,7 @@ class _BundleService {
     int port = null;
     HttpServer server = await HttpServer.bind("localhost", 0);
     port = server.port;
-    await server.close();
+    await server.close(force: true);
     return port;
   }
 
@@ -102,6 +103,7 @@ class Bundle {
   String name, rootPath, entryPointPath, packageRootPath;
   BundleStatus status = BundleStatus.STOPPED;
   Isolate isolate;
+  int port;
 }
 
 enum BundleStatus {
